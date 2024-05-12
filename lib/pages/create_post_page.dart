@@ -23,11 +23,13 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final buyPlaceController = TextEditingController();
   final sendPlaceController = TextEditingController();
   final coinsController = TextEditingController();
-  int timeSelected = 0;
 
+  int timeSelected = 0;
+  bool isLimitTime = false;
   late final List<String> imageListOfProduct = [];
 
   final ImagePicker _picker = ImagePicker();
+  final _formKey = GlobalKey<FormState>();
 
   int? limitTime;
 
@@ -279,7 +281,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     }
   }
 
-  bool useCoinToCreatePost(int? price, int? coins){
+  bool useCoinToCreatePost(int? price, int? coins) {
     if (price == null && coins == null) return false;
     var percent = price! * 0.85;
     if (coins! >= percent) {
@@ -358,15 +360,12 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                         width: 1,
                                         color: Color(0xFF00BF63),
                                       ),
-                                      borderRadius:
-                                      BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(12),
                                     )),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text(
                                       'ยกเลิก',
@@ -415,10 +414,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text(
                                       'ยืนยัน',
@@ -546,8 +543,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        hintText:
-                            "สถานที่ซื้อของ",
+                        hintText: "สถานที่ซื้อของ",
                         hintStyle: const TextStyle(
                           color: Color(0xFFC7C7CC),
                           fontSize: 14,
@@ -590,8 +586,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        hintText:
-                        "สถานทีนัดรับ",
+                        hintText: "สถานทีนัดรับ",
                         hintStyle: const TextStyle(
                           color: Color(0xFFC7C7CC),
                           fontSize: 14,
@@ -606,55 +601,59 @@ class _CreatePostPageState extends State<CreatePostPage> {
               ),
 
               //todo time select
-              // isLimitTime
-              //     ? const SizedBox(
-              //   height: 12,
-              // )
-              //     : Form(
-              //   key: _formKey,
-              //   child: Row(
-              //     children: [
-              //       const SizedBox(
-              //         width: 12,
-              //       ),
-              //       Expanded(
-              //         child: Row(
-              //           children: [
-              //             const SizedBox(width: 12,),
-              //             Text.rich(
-              //               TextSpan(
-              //                 children: [
-              //                   widget.timeSelected != null
-              //                       ? TextSpan(
-              //                     text: DateFormat("dd EEEE MMMM y h:m")
-              //                         .format(
-              //                       DateTime.fromMillisecondsSinceEpoch(
-              //                         widget.timeSelected!,
-              //                       ),
-              //                     ),
-              //                     style: const TextStyle(
-              //                       color: Color(0xFF172026),
-              //                       fontSize: 14,
-              //                       fontFamily: 'Mitr',
-              //                       fontWeight: FontWeight.w300,
-              //                       height: 0,
-              //                     ),
-              //                   )
-              //                       : const WidgetSpan(
-              //                     child: SizedBox(),
-              //                   ),
-              //                 ],
-              //               ),
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //       const SizedBox(
-              //         width: 12,
-              //       ),
-              //     ],
-              //   ),
-              // ),
+              isLimitTime
+                  ? const SizedBox(
+                      height: 12,
+                    )
+                  : Form(
+                      key: _formKey,
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 12,
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 12,
+                                ),
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      timeSelected != null
+                                          ? TextSpan(
+                                              text: DateFormat(
+                                                      "dd EEEE MMMM y h:m")
+                                                  .format(
+                                                DateTime
+                                                    .fromMillisecondsSinceEpoch(
+                                                  timeSelected,
+                                                ),
+                                              ),
+                                              style: const TextStyle(
+                                                color: Color(0xFF172026),
+                                                fontSize: 14,
+                                                fontFamily: 'Mitr',
+                                                fontWeight: FontWeight.w300,
+                                                height: 0,
+                                              ),
+                                            )
+                                          : const WidgetSpan(
+                                              child: SizedBox(),
+                                            ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 12,
+                          ),
+                        ],
+                      ),
+                    ),
               //
               // //todo images
               // imageListOfProduct.isNotEmpty
@@ -734,8 +733,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            hintText:
-                            "ราคาโดยประมาณ",
+                            hintText: "ราคาโดยประมาณ",
                             hintStyle: const TextStyle(
                               color: Color(0xFFC7C7CC),
                               fontSize: 14,

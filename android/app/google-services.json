@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "155748559689",
+    "project_id": "new-hew-hew",
+    "storage_bucket": "new-hew-hew.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:155748559689:android:798ba456e5fc81eaf94898",
+        "android_client_info": {
+          "package_name": "com.example.new_hew_hew"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxcSkPvp1v5-vIx8edqydikIZs2KPdT2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

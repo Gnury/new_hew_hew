@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../components/add_image_button.dart';
 import 'feed_page.dart';
 
 class CreatePostPage extends StatefulWidget {
@@ -23,8 +24,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final buyPlaceController = TextEditingController();
   final sendPlaceController = TextEditingController();
   final coinsController = TextEditingController();
+  final swiperController = SwiperController();
 
   int timeSelected = 0;
+  int currentIndex = 0;
   bool isLimitTime = false;
   late final List<String> imageListOfProduct = [];
 
@@ -656,54 +659,54 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     ),
               //
               // //todo images
-              // imageListOfProduct.isNotEmpty
-              //     ? Container(
-              //   alignment: Alignment.center,
-              //   height: MediaQuery.of(context).size.width - 64,
-              //   width: 320,
-              //   decoration: BoxDecoration(
-              //     borderRadius: BorderRadius.circular(100),
-              //   ),
-              //   child: Swiper(
-              //     controller: swiperController,
-              //     itemCount: widget.imageListOfProduct.length,
-              //     scrollDirection: Axis.horizontal,
-              //     itemBuilder: (context, index) {
-              //       final picture = widget.imageListOfProduct[index];
-              //       return Image.file(
-              //         File(picture),
-              //         fit: BoxFit.cover,
-              //       );
-              //     },
-              //     indicatorLayout: PageIndicatorLayout.COLOR,
-              //     pagination: const SwiperPagination(),
-              //     onIndexChanged: (index) {
-              //       currentIndex = index;
-              //     },
-              //   ),
-              // )
-              //     : const SizedBox(
-              //   width: 12,
-              //   height: 12,
-              // ),
-              // const SizedBox(
-              //   height: 12,
-              // ),
-              // AddImageButton(
-              //   isImageContain: widget.imageListOfProduct.isNotEmpty,
-              //   onAddImagePressed: () {
-              //     setState(() {
-              //       showOptions();
-              //     });
-              //   },
-              //   onRemoveImagePressed: () {
-              //     if (widget.imageListOfProduct.isNotEmpty) {
-              //       setState(() {
-              //         widget.imageListOfProduct.removeAt(currentIndex);
-              //       });
-              //     }
-              //   },
-              // ),
+              imageListOfProduct.isNotEmpty
+                  ? Container(
+                      alignment: Alignment.center,
+                      height: MediaQuery.of(context).size.width - 64,
+                      width: 320,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Swiper(
+                        controller: swiperController,
+                        itemCount: imageListOfProduct.length,
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (context, index) {
+                          final picture = imageListOfProduct[index];
+                          return Image.file(
+                            File(picture),
+                            fit: BoxFit.cover,
+                          );
+                        },
+                        indicatorLayout: PageIndicatorLayout.COLOR,
+                        pagination: const SwiperPagination(),
+                        onIndexChanged: (index) {
+                          currentIndex = index;
+                        },
+                      ),
+                    )
+                  : const SizedBox(
+                      width: 12,
+                      height: 12,
+                    ),
+              const SizedBox(
+                height: 12,
+              ),
+              AddImageButton(
+                isImageContain: imageListOfProduct.isNotEmpty,
+                onAddImagePressed: () {
+                  setState(() {
+                    showSelectImageOptions();
+                  });
+                },
+                onRemoveImagePressed: () {
+                  if (imageListOfProduct.isNotEmpty) {
+                    setState(() {
+                      imageListOfProduct.removeAt(currentIndex);
+                    });
+                  }
+                },
+              ),
               //todo price,coins
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,

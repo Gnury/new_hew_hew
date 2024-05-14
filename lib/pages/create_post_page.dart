@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../components/add_image_button.dart';
 import 'feed_page.dart';
@@ -603,110 +604,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 ],
               ),
 
-              //todo time select
-              isLimitTime
-                  ? const SizedBox(
-                      height: 12,
-                    )
-                  : Form(
-                      key: _formKey,
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 12,
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                const SizedBox(
-                                  width: 12,
-                                ),
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      timeSelected != null
-                                          ? TextSpan(
-                                              text: DateFormat(
-                                                      "dd EEEE MMMM y h:m")
-                                                  .format(
-                                                DateTime
-                                                    .fromMillisecondsSinceEpoch(
-                                                  timeSelected,
-                                                ),
-                                              ),
-                                              style: const TextStyle(
-                                                color: Color(0xFF172026),
-                                                fontSize: 14,
-                                                fontFamily: 'Mitr',
-                                                fontWeight: FontWeight.w300,
-                                                height: 0,
-                                              ),
-                                            )
-                                          : const WidgetSpan(
-                                              child: SizedBox(),
-                                            ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 12,
-                          ),
-                        ],
-                      ),
-                    ),
-              //
-              // //todo images
-              imageListOfProduct.isNotEmpty
-                  ? Container(
-                      alignment: Alignment.center,
-                      height: MediaQuery.of(context).size.width - 64,
-                      width: 320,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Swiper(
-                        controller: swiperController,
-                        itemCount: imageListOfProduct.length,
-                        scrollDirection: Axis.horizontal,
-                        itemBuilder: (context, index) {
-                          final picture = imageListOfProduct[index];
-                          return Image.file(
-                            File(picture),
-                            fit: BoxFit.cover,
-                          );
-                        },
-                        indicatorLayout: PageIndicatorLayout.COLOR,
-                        pagination: const SwiperPagination(),
-                        onIndexChanged: (index) {
-                          currentIndex = index;
-                        },
-                      ),
-                    )
-                  : const SizedBox(
-                      width: 12,
-                      height: 12,
-                    ),
-              const SizedBox(
-                height: 12,
-              ),
-              AddImageButton(
-                isImageContain: imageListOfProduct.isNotEmpty,
-                onAddImagePressed: () {
-                  setState(() {
-                    showSelectImageOptions();
-                  });
-                },
-                onRemoveImagePressed: () {
-                  if (imageListOfProduct.isNotEmpty) {
-                    setState(() {
-                      imageListOfProduct.removeAt(currentIndex);
-                    });
-                  }
-                },
-              ),
               //todo price,coins
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -751,6 +648,120 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   ),
                 ],
               ),
+
+              //todo time select
+              Row(
+                children: [
+                  isLimitTime
+                      ? const SizedBox(
+                          height: 12,
+                        )
+                      : Form(
+                          key: _formKey,
+                          child: Row(
+                            children: [
+                              const SizedBox(
+                                width: 12,
+                              ),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const SizedBox(
+                                      width: 12,
+                                    ),
+                                    Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          timeSelected != null
+                                              ? TextSpan(
+                                                  text: DateFormat(
+                                                          "dd EEEE MMMM y h:m")//todo date format
+                                                      .format(
+                                                    DateTime
+                                                        .fromMillisecondsSinceEpoch(
+                                                      timeSelected,
+                                                    ),
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF172026),
+                                                    fontSize: 14,
+                                                    fontFamily: 'Mitr',
+                                                    fontWeight: FontWeight.w300,
+                                                    height: 0,
+                                                  ),
+                                                )
+                                              : const WidgetSpan(
+                                                  child: SizedBox(),
+                                                ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 12,
+                              ),
+                            ],
+                          ),
+                        ),
+                ],
+              ),
+
+              //todo images
+              imageListOfProduct.isNotEmpty
+                  ? Container(
+                      alignment: Alignment.center,
+                      height: MediaQuery.of(context).size.width - 64,
+                      width: 320,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Swiper(
+                        controller: swiperController,
+                        itemCount: imageListOfProduct.length,
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (context, index) {
+                          final picture = imageListOfProduct[index];
+                          return Image.file(
+                            File(picture),
+                            fit: BoxFit.cover,
+                          );
+                        },
+                        indicatorLayout: PageIndicatorLayout.COLOR,
+                        pagination: const SwiperPagination(),
+                        onIndexChanged: (index) {
+                          currentIndex = index;
+                        },
+                      ),
+                    )
+                  : const SizedBox(
+                      width: 12,
+                      height: 12,
+                    ),
+              const SizedBox(
+                height: 12,
+              ),
+              Row(
+                children: [
+                  AddImageButton(
+                    isImageContain: imageListOfProduct.isNotEmpty,
+                    onAddImagePressed: () {
+                      setState(() {
+                        showSelectImageOptions();
+                      });
+                    },
+                    onRemoveImagePressed: () {
+                      if (imageListOfProduct.isNotEmpty) {
+                        setState(() {
+                          imageListOfProduct.removeAt(currentIndex);
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+
               //TODO Button
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -758,10 +769,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        // bool isChecked = useCoinToCreatePost(123, 123);//todo implement data
-                        // if(isChecked){
-                        //   uploadToDatabase();
-                        // }
+                        bool isChecked = useCoinToCreatePost(123, 123);//todo implement data
+                        if(isChecked){
+                          uploadToDatabase();
+                        }
                       },
                       child: Container(
                         height: 55,

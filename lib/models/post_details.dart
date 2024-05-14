@@ -6,8 +6,8 @@ class PostDetails {
   final String buyPlace;
   final String sendPlace;
   final User? user;
-  final DateTime startDate;
-  final DateTime dueDate;
+  final int startDate;
+  final int dueDate;
   final int coins;
   final List<String> imageUrlList;
 

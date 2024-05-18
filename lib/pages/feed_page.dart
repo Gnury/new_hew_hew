@@ -23,208 +23,101 @@ class _FeedPageState extends State<FeedPage> {
     });
   }
 
+  Widget _searchBar() {
+    return Row(
+      children: [
+        const Icon(
+          Icons.search,
+          color: Colors.black,
+        ),
+        Expanded(
+          child: TextFormField(
+            controller: SerchController,
+            onChanged: (val) {
+              EasyDebounce.debounce(
+                'searchDebounce', // debounce identifier
+                const Duration(milliseconds: 500), // debounce duration
+                () => debouncedSearch(val), // function to be executed
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _createPostButton() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        IconButton(
+          icon: const Icon(
+            Icons.add_circle,
+            color: Color(0xfff9af23),
+            size: 70,
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CreatePostPage(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // if (PostCard == null) {
-    //   return Scaffold(
-    //     appBar: AppBar(
-    //       backgroundColor: Colors.white,
-    //       title: Row(
-    //         children: [
-    //           Image.asset(
-    //             'assets/images/icon-hew-hew.png',
-    //             fit: BoxFit.cover,
-    //             height: 60,
-    //           ),
-    //           const Spacer(),
-    //           const Text(
-    //             'โพสต์รับหิ้ว',
-    //             style:
-    //                 TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-    //           ),
-    //           const Spacer(),
-    //           const SizedBox(
-    //             width: 10,
-    //           ),
-    //           const Icon(
-    //             Icons.notifications_active,
-    //             color: Colors.black,
-    //           ),
-    //         ],
-    //       ),
-    //     ),
-    //     body: Row(
-    //       mainAxisAlignment: MainAxisAlignment.end,
-    //       children: [
-    //         Expanded(
-    //           child: InkWell(
-    //             onTap: () {
-    //               Navigator.push(
-    //                 context,
-    //                 MaterialPageRoute(
-    //                   builder: (context) => const CreatePostPage(),
-    //                 ),
-    //               );
-    //             },
-    //             child: Container(
-    //               height: 55,
-    //               padding: const EdgeInsets.symmetric(
-    //                 horizontal: 24,
-    //                 vertical: 12,
-    //               ),
-    //               decoration: ShapeDecoration(
-    //                 gradient: const LinearGradient(
-    //                   begin: Alignment.topLeft,
-    //                   end: Alignment.bottomRight,
-    //                   colors: [Color(0xFF6229EE), Color(0xFF9267FE)],
-    //                 ),
-    //                 shape: RoundedRectangleBorder(
-    //                   borderRadius: BorderRadius.circular(12),
-    //                 ),
-    //               ),
-    //               child: const Row(
-    //                 mainAxisSize: MainAxisSize.min,
-    //                 mainAxisAlignment: MainAxisAlignment.center,
-    //                 crossAxisAlignment: CrossAxisAlignment.center,
-    //                 children: [
-    //                   Text(
-    //                     "LET’S CHECK",
-    //                     style: TextStyle(
-    //                       color: Colors.white,
-    //                       fontSize: 20,
-    //                       fontFamily: "Mitr",
-    //                       fontWeight: FontWeight.w500,
-    //                       height: 0,
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //             ),
-    //           ),
-    //         ),
-    //       ],
-    //     ),
-    //   );
-    // } else {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          title: Row(
-            children: [
-              Image.asset(
-                'assets/images/icon-hew-hew.png',
-                fit: BoxFit.cover,
-                height: 60,
-              ),
-              const Spacer(),
-              const Text(
-                'โพสต์รับหิ้ว',
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-              const Spacer(),
-              const SizedBox(
-                width: 10,
-              ),
-              const Icon(
-                Icons.notifications_active,
-                color: Colors.black,
-              ),
-            ],
-          ),
+    return Scaffold(
+      backgroundColor: const Color(0xffF5F0F0),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/icon-hew-hew.png',
+              fit: BoxFit.cover,
+              height: 60,
+            ),
+            const Spacer(),
+            const Text(
+              'โพสต์รับหิ้ว',
+              style:
+                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            const SizedBox(
+              width: 10,
+            ),
+            const Icon(
+              Icons.notifications_active,
+              color: Colors.black,
+            ),
+          ],
         ),
-        body: Container(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.search,
-                    color: Colors.black,
-                  ),
-                  Expanded(
-                    child: TextFormField(
-                      controller: SerchController,
-                      onChanged: (val) {
-                        EasyDebounce.debounce(
-                          'searchDebounce', // debounce identifier
-                          const Duration(
-                              milliseconds:
-                              500), // debounce duration
-                              () => debouncedSearch(
-                              val), // function to be executed
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              PostCard(
-                swiperController: swiperController,
-                postDetails: const [],
-              ),
-              // PostListView(),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CreatePostPage(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        height: 55,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        decoration: ShapeDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF6229EE), Color(0xFF9267FE)],
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "LET’S CHECK",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontFamily: "Mitr",
-                                fontWeight: FontWeight.w500,
-                                height: 0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      ),
+      body: Container(
+        child: Column(
+          children: [
+            _searchBar(),
+            PostCard(
+              swiperController: swiperController,
+              postDetails: const [],
+            ),
+          ],
         ),
-        // bottomNavigationBar: BottomNavigationBar(
-        //   items: const <BottomNavigationBarItem>[
-        //
-        //   ],
-        // ),
-      );
-    }
+      ),
+      floatingActionButton: _createPostButton(),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   items: const <BottomNavigationBarItem>[
+      //
+      //   ],
+      // ),
+    );
   }
+}
 // }

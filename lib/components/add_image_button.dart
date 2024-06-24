@@ -17,9 +17,9 @@ class AddImageButton extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if(isImageContain) _buildAddOrRemoveButton("ลบรูปภาพ", const Color(0xFFFF5757), () => onRemoveImagePressed(),),
+        if(isImageContain) _buildAddOrRemoveButton("ลบรูปภาพ", const Color(0xFFFE8989), () => onRemoveImagePressed(),),
         const SizedBox(width: 8),
-        _buildAddOrRemoveButton("เพิ่มรูปภาพ", const Color(0xFF6229EE),() => onAddImagePressed(),),
+        _buildAddOrRemoveButton("เพิ่มรูปภาพ", const Color(0xFF9FCB72),() => onAddImagePressed(),),
         const SizedBox(width: 12,),
       ],
     );

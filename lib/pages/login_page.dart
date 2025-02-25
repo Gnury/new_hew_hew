@@ -20,8 +20,15 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      // Navigate to the bottom navigator screen on successful login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BottomNavigatorScreen(),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
-        showErrorMessage(e.code);
+      showErrorMessage(e.code);
     }
   }
 

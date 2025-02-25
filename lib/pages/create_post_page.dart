@@ -13,6 +13,8 @@ import 'package:new_hew_hew/pages/bottom_navigator_screen.dart';
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 
 import '../components/add_image_button.dart';
+import '../firebase/firebase_service_api.dart';
+import '../models/user.dart';
 import 'feed_page.dart';
 
 class CreatePostPage extends StatefulWidget {
@@ -29,6 +31,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final coinsController = TextEditingController();
   final swiperController = SwiperController();
   DateTime? selectDateTime;
+  final bool getPost = false;
+  CurrentUser? currentUser;
+  FirebaseService userService = FirebaseService();
 
   int currentIndex = 0;
   bool isLimitTime = false;
@@ -56,6 +61,20 @@ class _CreatePostPageState extends State<CreatePostPage> {
       case TargetPlatform.macOS:
         return CupertinoDialogAction(onPressed: onPressed, child: child);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getUser();
+  }
+
+  Future<void> _getUser() async {
+    var thisUser = await userService.getUser();
+    setState(() {
+      if (thisUser == null) return;
+      currentUser = thisUser;
+    });
   }
 
   Future<void> uploadToDatabase() async {
@@ -94,6 +113,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
         "due_date": selectDateTime?.toUtc(),
         "image_url_list": downloadUrls,
         "Timestamp": Timestamp.now(),
+        "get_post": getPost,
+        "name": currentUser?.name,
+        "last_name": currentUser?.lastName,
+        "image_url": currentUser?.imageUrl,
       });
 
       if (mounted) {
@@ -278,7 +301,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
       return Container();
     }
 
-    final dateFormat = DateFormat("EEEE dd MMMM hh:mm a").format(selectDateTime!);
+    final dateFormat =
+        DateFormat("EEEE dd MMMM hh:mm a").format(selectDateTime!);
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -296,14 +320,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   onSelectDateTime() async {
     final selectedDateTime = await dateTimePicker();
-      setState(() {
-        selectDateTime = selectedDateTime;
-      });
+    setState(() {
+      selectDateTime = selectedDateTime;
+    });
     print("datetimeseclect $selectDateTime");
   }
 
   dateTimePicker() async {
-     DateTime? dateTime =  await showOmniDateTimePicker(
+    DateTime? dateTime = await showOmniDateTimePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(1600).subtract(const Duration(days: 3652)),
@@ -341,7 +365,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         }
       },
     );
-     return dateTime;
+    return dateTime;
   }
 
   bool useCoinToCreatePost(int? price, int? coins) {
@@ -354,188 +378,183 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Widget _form() {
-    return Container(
-      decoration: const BoxDecoration(color: Colors.white),
-      width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 12, 12),
-      child: SingleChildScrollView(
-        child: Container(
-          margin: const EdgeInsets.all(10),
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 12,
-              ),
-              //Product name
-              TextField(
-                controller: titleController,
-                maxLines: null,
-                maxLength: 100,
-                decoration: InputDecoration(
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xFFF2F2F7),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
+    return SingleChildScrollView(
+      child: Container(
+        margin: const EdgeInsets.all(10),
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 12,
+            ),
+            //Product name
+            TextField(
+              controller: titleController,
+              maxLines: null,
+              maxLength: 100,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
+                    color: Color(0xFFF2F2F7),
                   ),
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xffF9AF23),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  hintText: "ชื่อสินค้า",
-                  hintStyle: const TextStyle(
-                    color: Color(0xFFC7C7CC),
-                    fontSize: 14,
-                    fontFamily: 'Mitr',
-                    fontWeight: FontWeight.w300,
-                    height: 0,
-                  ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-
-              const SizedBox(
-                height: 12,
-              ),
-              //Descriptions
-
-              TextField(
-                controller: buyPlaceController,
-                maxLines: null,
-                maxLength: 500,
-                decoration: InputDecoration(
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xFFF2F2F7),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xffF9AF23),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  hintText: "สถานที่ซื้อของ",
-                  hintStyle: const TextStyle(
-                    color: Color(0xFFC7C7CC),
-                    fontSize: 14,
-                    fontFamily: 'Mitr',
-                    fontWeight: FontWeight.w300,
-                    height: 0,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 12,
-              ),
-              //Descriptions
-
-              TextField(
-                controller: sendPlaceController,
-                maxLines: null,
-                maxLength: 500,
-                decoration: InputDecoration(
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xFFF2F2F7),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xffF9AF23),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  hintText: "สถานทีนัดรับ",
-                  hintStyle: const TextStyle(
-                    color: Color(0xFFC7C7CC),
-                    fontSize: 14,
-                    fontFamily: 'Mitr',
-                    fontWeight: FontWeight.w300,
-                    height: 0,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 12,
-              ),
-
-              TextField(
-                controller: coinsController,
-                maxLines: null,
-                maxLength: 10,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xFFF2F2F7),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  isDense: true,
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 1,
-                      color: Color(0xffF9AF23),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  hintText: "ราคาโดยประมาณ",
-                  hintStyle: const TextStyle(
-                    color: Color(0xFFC7C7CC),
-                    fontSize: 14,
-                    fontFamily: 'Mitr',
-                    fontWeight: FontWeight.w300,
-                    height: 0,
-                  ),
-                  suffixText: 'เหรียญ',
-                  suffixStyle: const TextStyle(
+                isDense: true,
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
                     color: Color(0xffF9AF23),
-                    fontSize: 14,
-                    fontFamily: 'Mitr',
-                    fontWeight: FontWeight.w300,
-                    height: 0,
                   ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                hintText: "ชื่อสินค้า",
+                hintStyle: const TextStyle(
+                  color: Color(0xFFC7C7CC),
+                  fontSize: 14,
+                  fontFamily: 'Mitr',
+                  fontWeight: FontWeight.w300,
+                  height: 0,
                 ),
               ),
-              const SizedBox(
-                height: 12,
-              ),
-              _showDateTime(),
-              const SizedBox(
-                height: 12,
-              ),
-              //time select
-              _selectTimeButton(),
-              const SizedBox(
-                height: 12,
-              ),
-              //images
-              _addImage(),
-              const SizedBox(
-                height: 12,
-              ),
-              _addImageButton(),
+            ),
 
-              const SizedBox(
-                height: 24,
+            const SizedBox(
+              height: 12,
+            ),
+            //Descriptions
+
+            TextField(
+              controller: buyPlaceController,
+              maxLines: null,
+              maxLength: 500,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
+                    color: Color(0xFFF2F2F7),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                isDense: true,
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
+                    color: Color(0xffF9AF23),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                hintText: "สถานที่ซื้อของ",
+                hintStyle: const TextStyle(
+                  color: Color(0xFFC7C7CC),
+                  fontSize: 14,
+                  fontFamily: 'Mitr',
+                  fontWeight: FontWeight.w300,
+                  height: 0,
+                ),
               ),
-              _postButton()
-            ],
-          ),
+            ),
+            const SizedBox(
+              height: 12,
+            ),
+            //Descriptions
+
+            TextField(
+              controller: sendPlaceController,
+              maxLines: null,
+              maxLength: 500,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
+                    color: Color(0xFFF2F2F7),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                isDense: true,
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
+                    color: Color(0xffF9AF23),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                hintText: "สถานทีนัดรับ",
+                hintStyle: const TextStyle(
+                  color: Color(0xFFC7C7CC),
+                  fontSize: 14,
+                  fontFamily: 'Mitr',
+                  fontWeight: FontWeight.w300,
+                  height: 0,
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 12,
+            ),
+
+            TextField(
+              controller: coinsController,
+              maxLines: null,
+              maxLength: 10,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
+                    color: Color(0xFFF2F2F7),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                isDense: true,
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 1,
+                    color: Color(0xffF9AF23),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                hintText: "ราคาโดยประมาณ",
+                hintStyle: const TextStyle(
+                  color: Color(0xFFC7C7CC),
+                  fontSize: 14,
+                  fontFamily: 'Mitr',
+                  fontWeight: FontWeight.w300,
+                  height: 0,
+                ),
+                suffixText: 'เหรียญ',
+                suffixStyle: const TextStyle(
+                  color: Color(0xffF9AF23),
+                  fontSize: 14,
+                  fontFamily: 'Mitr',
+                  fontWeight: FontWeight.w300,
+                  height: 0,
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 12,
+            ),
+            _showDateTime(),
+            const SizedBox(
+              height: 12,
+            ),
+            //time select
+            _selectTimeButton(),
+            const SizedBox(
+              height: 12,
+            ),
+            //images
+            _addImage(),
+            const SizedBox(
+              height: 12,
+            ),
+            _addImageButton(),
+
+            const SizedBox(
+              height: 24,
+            ),
+            _postButton()
+          ],
         ),
       ),
     );
@@ -624,51 +643,40 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Widget _postButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        InkWell(
-          onTap: () {
-            // bool isChecked =
-            //     useCoinToCreatePost(123, 123); //todo implement data
-            // if (isChecked) {
-            uploadToDatabase();
-            // }
-          },
-          child: Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 12,
-            ),
-            decoration: ShapeDecoration(
-              color: const Color(0xffF9AF23),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            //text
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  "POST",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: "Mitr",
-                    fontWeight: FontWeight.w500,
-                    height: 0,
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xffF9AF23),
+        fixedSize: const Size(100, 50),
+        textStyle: const TextStyle(
+          color: Color(0xFF172026),
+          fontSize: 18,
+          fontFamily: 'Mitr',
+          fontWeight: FontWeight.bold,
+          height: 0,
         ),
-      ],
+      ),
+      onPressed: () {
+        uploadToDatabase();
+        Navigator.pop(context);
+      },
+      child: const Text(
+        "POST",
+      ),
     );
+    // return GestureDetector(
+    //   onTap: () {
+    //     // bool isChecked =
+    //     //     useCoinToCreatePost(123, 123); //todo implement data
+    //     // if (isChecked) {
+    //     uploadToDatabase();
+    //     Navigator.pop(context);
+    //     // }},
+    //   child: const Text(
+    //     "POST",
+
+    //   );
+    //   }
+    // );
   }
 
   @override

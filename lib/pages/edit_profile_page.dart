@@ -1,24 +1,50 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:new_hew_hew/models/user.dart';
 
 import 'bottom_navigator_screen.dart';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  final CurrentUser? user;
+  const EditProfilePage({super.key, required this.user});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final _currentUser = FirebaseAuth.instance.currentUser!;
+
   final _userCollection = FirebaseFirestore.instance.collection("users");
-  final _firstNameController = TextEditingController(text: 'Nawapat');
-  final _lastNameController = TextEditingController(text: 'Phongkhiao');
-  final _phoneNumberController = TextEditingController(text: '081-123-4567');
-  final _addressController = TextEditingController(
-      text: 'ที่อยู่ หอพักแม่พลอย 315 ต.แม่กา อ.เมืองพะเยา จ.พะเยา 56000');
+  TextEditingController _firstNameController = TextEditingController();
+  TextEditingController _lastNameController = TextEditingController();
+  TextEditingController _phoneNumberController = TextEditingController();
+  TextEditingController _addressController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _firstNameController = TextEditingController(text: widget.user?.name);
+    _lastNameController = TextEditingController(text: widget.user?.lastName);
+    _phoneNumberController = TextEditingController(text: widget.user?.phoneNumber.toString());
+    _addressController = TextEditingController(text: widget.user?.address);
+  }
+  @override
+  void didUpdateWidget(covariant EditProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _firstNameController = TextEditingController(text: widget.user?.name);
+    _lastNameController = TextEditingController(text: widget.user?.lastName);
+    _phoneNumberController = TextEditingController(text: widget.user?.phoneNumber.toString());
+    _addressController = TextEditingController(text: widget.user?.address);
+  }
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _addressController.dispose();
+    _phoneNumberController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,12 +76,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BottomNavigatorScreen(),
-                ),
-              );
+              Navigator.pop(context);
             },
             icon: const Icon(Icons.cancel_outlined),
             color: Colors.black,
@@ -210,7 +231,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                     onPressed: () async{
                       try {
-                        await _userCollection.doc(_currentUser.uid).update({
+                        await _userCollection.doc(widget.user?.email).update({
                           'name': _firstNameController.text,
                           'last_name': _lastNameController.text,
                           'phoneNumber': _phoneNumberController.text,
@@ -219,12 +240,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('อัปเดตข้อมูลเรียบร้อยแล้ว')),
                         );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BottomNavigatorScreen(),
-                          ),
-                        );
+                        Navigator.pop(context);
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('เกิดข้อผิดพลาดในการอัปเดตข้อมูล: $e')),

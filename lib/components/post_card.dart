@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import 'package:card_swiper/card_swiper.dart';
@@ -9,6 +10,7 @@ import '../models/post_details.dart';
 class PostCard extends StatelessWidget {
   final List<PostDetails>? postDetails;
   final SwiperController swiperController;
+
 
   const PostCard({
     super.key,
@@ -30,6 +32,7 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final postCollection = FirebaseFirestore.instance.collection("posts");
     if (postDetails == null) return Container();
     return ListView.builder(
       shrinkWrap: true,
@@ -40,18 +43,22 @@ class PostCard extends StatelessWidget {
         final postTitle = postDetail.postTitle;
         final buyPlace = postDetail.buyPlace;
         final sendPlace = postDetail.sendPlace;
-        // final user = postDetail.user!;
+        final user = postDetail.user;
+        final name = postDetail.name;
+        final lastName = postDetail.lastName;
+        final imageUrl = postDetail.imageUrl;
         final dueDate = postDetail.dueDate;
         final coins = postDetail.coins;
         final List<String> imageUrlList = postDetail.imageUrlList;
         final bool getPost = postDetail.getPost;
+        final timestamp = postDetail.timeStamp;
+        // final String uid = postDetail.uid;
         int now = DateTime.now().millisecondsSinceEpoch;
-        // final bool isDueDateTime = dueDate <= now;
-        if (!getPost) {
-          return //Opacity(
-            // opacity: (isDueDateTime) ? 0.4 : 0.1,
-            //child:
-            Padding(
+        if (getPost) {
+          return
+            Container();
+        }
+        return  Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(24, 0, 24, 12),
           child: Container(
             width: double.infinity,
@@ -111,21 +118,21 @@ class PostCard extends StatelessWidget {
                                       fit: BoxFit.cover,
                                     ),
                                   ),
-                                  const Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                  Padding(
+                                    padding: const EdgeInsetsDirectional.fromSTEB(
                                         12, 4, 0, 12),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.max,
                                       mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      MainAxisAlignment.center,
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'mm',
+                                          "$name $lastName",
                                           // user.fullName.toString(),
                                           textAlign: TextAlign.start,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontFamily: 'Mitr',
                                             color: Color(0xFF172026),
                                             fontSize: 16,
@@ -133,9 +140,11 @@ class PostCard extends StatelessWidget {
                                           ),
                                         ),
                                         Text(
-                                          'วันนี้ 12.00 น.',
+                                          DateFormat("EEEE dd MMMM hh:mm a").format(
+                                            timestamp.toDate(),
+                                          ),
                                           textAlign: TextAlign.start,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontFamily: 'Mitr',
                                             color: Color(0xFF36485C),
                                             fontSize: 12,
@@ -159,8 +168,8 @@ class PostCard extends StatelessWidget {
                                 children: [
                                   Padding(
                                     padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 0, 6),
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 6),
                                     child: Text(
                                       'รายละเอียดสินค้า:  $postTitle',
                                       textAlign: TextAlign.start,
@@ -173,8 +182,8 @@ class PostCard extends StatelessWidget {
                                   ),
                                   Padding(
                                     padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 0, 6),
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 6),
                                     child: Text(
                                       'สถานที่ซื้อของ: $buyPlace',
                                       textAlign: TextAlign.center,
@@ -187,8 +196,8 @@ class PostCard extends StatelessWidget {
                                   ),
                                   Padding(
                                     padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 0, 6),
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 6),
                                     child: Text(
                                       'สถานที่นัดรับ: $sendPlace',
                                       textAlign: TextAlign.center,
@@ -201,11 +210,11 @@ class PostCard extends StatelessWidget {
                                   ),
                                   Padding(
                                     padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 0, 6),
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 6),
                                     child: Text(
                                       'เปิดรับถึง: ${DateFormat("EEEE dd MMMM hh:mm a").format(
-                                            dueDate.toDate(),
+                                        dueDate.toDate(),
                                       )}',
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
@@ -217,8 +226,8 @@ class PostCard extends StatelessWidget {
                                   ),
                                   Padding(
                                     padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            0, 0, 0, 6),
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                        0, 0, 0, 6),
                                     child: Text(
                                       'ราคา $coins เหรียญ',
                                       textAlign: TextAlign.center,
@@ -246,8 +255,8 @@ class PostCard extends StatelessWidget {
                                   children: [
                                     Padding(
                                       padding:
-                                          const EdgeInsetsDirectional.fromSTEB(
-                                              0, 0, 0, 12),
+                                      const EdgeInsetsDirectional.fromSTEB(
+                                          0, 0, 0, 12),
                                       child: Swiper(
                                         controller: swiperController,
                                         itemCount: imageUrlList.length,
@@ -261,7 +270,7 @@ class PostCard extends StatelessWidget {
                                           );
                                         },
                                         indicatorLayout:
-                                            PageIndicatorLayout.COLOR,
+                                        PageIndicatorLayout.COLOR,
                                         pagination: const SwiperPagination(),
                                         onIndexChanged: (index) {
                                           imageUrlList[index];
@@ -288,7 +297,10 @@ class PostCard extends StatelessWidget {
                                     fixedSize: const Size(80, 40),
                                   ),
                                   onPressed: () {
-
+                                    // await postCollection.doc().update({
+                                    //   'get_post': true,
+                                    // },
+                                    // );
                                   },
                                   child: const Text(
                                     "รับหิ้ว",
@@ -297,11 +309,6 @@ class PostCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            // Row(
-                            //   children: [
-                            //     InkWell()
-                            //   ],
-                            // ),
                           ],
                         ),
                       ),
@@ -313,7 +320,6 @@ class PostCard extends StatelessWidget {
           ),
           // ),
         );
-        }
       },
     );
   }

@@ -1,32 +1,33 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:new_hew_hew/models/post_details.dart';
 
-class User {
+class CurrentUser {
   final String? name;
   final String? lastName;
   final String? imageUrl;
   final int? coins;
-  final List<PostDetails>? postDetails;
   final String? address;
   final int? phoneNumber;
+  final String? email;
 
-  User({
+  CurrentUser({
     this.coins,
     this.name,
     this.lastName,
     this.imageUrl,
-    this.postDetails,
     this.address,
     this.phoneNumber,
+    this.email
   });
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
+  factory CurrentUser.fromJson(DocumentSnapshot<Map<String, dynamic>> json) => CurrentUser(
     name: json["name"],
     lastName: json["last_name"],
     coins: json["coins"],
     imageUrl: json["image_url"],
-    postDetails: List<PostDetails>.from(json["post_details"].map((x) => x)),
     address: json["address"],
     phoneNumber: json["phone_number"],
+    email: json["email"]
   );
 
   Map<String, dynamic> toJson() => {
@@ -34,8 +35,8 @@ class User {
     "last_name": lastName,
     "coins": coins,
     "image_url": imageUrl,
-    "post_details": List<dynamic>.from(postDetails!.map((x) => x)),
     "address": address,
     "phone_number": phoneNumber,
+    "email": email,
   };
 }

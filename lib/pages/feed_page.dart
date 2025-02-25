@@ -27,26 +27,39 @@ class _FeedPageState extends State<FeedPage> {
 //todo search
   final searchController = TextEditingController();
   Timer? _debounce;
-  List<String> _filterData = [];
+  List<PostDetails> _filterData = [];
 
   String searchQuery = "";
 
   void debouncedSearch(String value) {
-    setState(() {
-      searchQuery = value;
-    });
-  }
-
-  Future<void> _onSearchChange() async {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(
       const Duration(milliseconds: 500),
       () {
-        if (searchQuery != searchController.text) {
-          _filterData = posts!.cast<String>();
-        }
+        setState(
+          () {
+            searchQuery = value;
+            _onSearchChange();
+          },
+        );
       },
     );
+  }
+
+  Future<void> _onSearchChange() async {
+    if (posts == null) return;
+
+    List<PostDetails> filteredList = posts!.where((post) {
+      final title = post.postTitle.toLowerCase();
+      final buyPlace = post.buyPlace.toLowerCase();
+      final query = searchQuery.toLowerCase();
+
+      return title.contains(query) || buyPlace.contains(query);
+    }).toList();
+
+    setState(() {
+      _filterData = filteredList;
+    });
   }
 
   @override
@@ -100,13 +113,8 @@ class _FeedPageState extends State<FeedPage> {
                   height: 0,
                 ),
               ),
-              //todo search
               onChanged: (val) {
-                EasyDebounce.debounce(
-                  'searchDebounce', // debounce identifier
-                  const Duration(milliseconds: 500), // debounce duration
-                  () => debouncedSearch(val), // function to be executed
-                );
+               debouncedSearch(val);
               },
             ),
           ),
@@ -124,7 +132,7 @@ class _FeedPageState extends State<FeedPage> {
           MaterialPageRoute(
             builder: (context) => const CreatePostPage(),
           ),
-        );
+        ).then((value) => _getPosts());
       },
       child: const Icon(Icons.add),
     );
@@ -163,7 +171,8 @@ class _FeedPageState extends State<FeedPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const NotificationPage(),
+                  builder: (context) =>
+                      NotificationPage(notificationPost: posts),
                 ),
               );
             },
@@ -172,27 +181,29 @@ class _FeedPageState extends State<FeedPage> {
           ),
         ],
       ),
-      body: Container(
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 12,
-            ),
-            _searchBar(),
-            const SizedBox(
-              height: 12,
-            ),
-            Visibility(
-              visible: posts != null,
-              child: Expanded(
-                child: PostCard(
-                  swiperController: swiperController,
-                  postDetails: posts,
-                ),
+      body: Column(
+        children: [
+          const SizedBox(
+            height: 12,
+          ),
+          _searchBar(),
+          const SizedBox(
+            height: 12,
+          ),
+          Expanded(
+            child: Visibility(
+              visible: searchQuery.isNotEmpty,
+              replacement: PostCard(
+                swiperController: swiperController,
+                postDetails: posts,
+              ),
+              child: PostCard(
+                swiperController: swiperController,
+                postDetails: _filterData,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: _createPostButton(),
     );

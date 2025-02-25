@@ -89,6 +89,8 @@ class _RegisterPageState extends State<RegisterPage> {
       'email': email,
       'address': address,
       'phone_number': phoneNumber,
+      'coins': 0,
+      'image_url': '',
     });
     await FirebaseFirestore.instance
         .collection("users")
@@ -196,6 +198,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 TextField(
                   controller: _passwordController,
+                  obscureText: true,
                   decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(
@@ -235,6 +238,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 TextField(
                   controller: _confirmPasswordController,
+                  obscureText: true,
                   decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(

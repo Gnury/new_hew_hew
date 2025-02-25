@@ -1,7 +1,7 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/post_details.dart';
+import '../models/user.dart';
 
 class FirebaseService {
   final db = FirebaseFirestore.instance;
@@ -18,6 +18,16 @@ class FirebaseService {
       return data;
 
     } catch (error) {
+      rethrow;
+    }
+  }
+
+  Future<CurrentUser>? getUser() async{
+    try {
+      final data = await db.collection("users").doc("dd@gmail.com").get();
+      return CurrentUser.fromJson(data);
+
+    }catch (error) {
       rethrow;
     }
   }

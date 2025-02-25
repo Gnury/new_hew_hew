@@ -5,12 +5,16 @@ class PostDetails {
   final String postTitle;
   final String buyPlace;
   final String sendPlace;
-  final User? user;
+  final CurrentUser? user;
   final Timestamp dueDate;
   final int coins;
   final List<String> imageUrlList;
   final Timestamp timeStamp;
   final bool getPost;
+  final String imageUrl;
+  final String name;
+  final String lastName;
+  // final String uid;
 
   const PostDetails({
     required this.postTitle,
@@ -22,9 +26,13 @@ class PostDetails {
     required this.imageUrlList,
     required this.timeStamp,
     required this.getPost,
+    required this.imageUrl,
+    required this.lastName,
+    required this.name,
+    // required this.uid,
   });
 
-  factory PostDetails.fromJson(Map<String, dynamic> json) => PostDetails(
+  factory PostDetails.fromJson(Map<String, dynamic> json/*,{required String uid}*/) => PostDetails(
     postTitle: json["post_title"],
     user: json["user"],
     dueDate: json["due_date"],
@@ -34,6 +42,10 @@ class PostDetails {
     imageUrlList: List<String>.from(json["image_url_list"].map((x) => x)),
     timeStamp: json["Timestamp"],
     getPost: json["get_post"],
+    name: json["name"],
+    lastName: json["last_name"],
+    imageUrl: json["image_url"],
+    // uid: uid,
   );
 
   Map<String, dynamic> toJson() => {
@@ -46,5 +58,8 @@ class PostDetails {
     "image_url_list": List<dynamic>.from(imageUrlList.map((x) => x)),
     "Timestamp": timeStamp,
     "get_post": getPost,
+    "name": name,
+    "last_name": lastName,
+    "image_url": imageUrl,
   };
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:new_hew_hew/components/notification_card.dart';
 import 'package:new_hew_hew/pages/bottom_navigator_screen.dart';
 
+import '../components/post_user_info_card.dart';
 import '../models/post_details.dart';
-
 
 class NotificationPage extends StatefulWidget {
   final List<PostDetails>? notificationPost;
@@ -52,7 +52,12 @@ class _NotificationPageState extends State<NotificationPage> {
       body: Container(
         child: Column(
           children: [
-            Expanded(child: NotificationCard(postDetails: widget.notificationPost,),)
+            PostUserInfoCard(),
+            Expanded(
+              child: NotificationCard(
+                postDetails: widget.notificationPost,
+              ),
+            ),
           ],
         ),
       ),

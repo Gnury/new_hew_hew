@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_hew_hew/pages/my_order_page.dart';
 import 'package:new_hew_hew/pages/profile_page.dart';
 
 import 'feed_page.dart';
@@ -16,6 +17,7 @@ class _BottomNavigatorScreenState extends State<BottomNavigatorScreen> {
   final pageOptions = [
     const FeedPage(),
     const ProfilePage(),
+    const MyOrderPage(),
   ];
 
   @override
@@ -33,6 +35,7 @@ class _BottomNavigatorScreenState extends State<BottomNavigatorScreen> {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'My Order'),
           ]),
     );
   }

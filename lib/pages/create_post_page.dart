@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:new_hew_hew/pages/bottom_navigator_screen.dart';
@@ -105,7 +106,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
     }
 
     if (titleController.text.isNotEmpty) {
-      await FirebaseFirestore.instance.collection("posts").doc().set({
+      LocationSettings locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      );
+      Position position = await Geolocator.getCurrentPosition(
+          locationSettings: locationSettings);
+      final docRef = FirebaseFirestore.instance.collection("posts").doc();
+
+      await docRef.set({
         "post_title": titleController.text,
         "buy_place": buyPlaceController.text,
         "send_place": sendPlaceController.text,
@@ -117,6 +125,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
         "name": currentUser?.name,
         "last_name": currentUser?.lastName,
         "image_url": currentUser?.imageUrl,
+        "email": currentUser?.email,
+        "id": docRef,
+        "latitude": position.latitude,
+        "longitude": position.longitude,
+        "receive_user_email": "",
       });
 
       if (mounted) {
@@ -368,16 +381,22 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return dateTime;
   }
 
-  bool useCoinToCreatePost(int? price, int? coins) {
-    if (price == null && coins == null) return false;
-    var percent = price! * 0.85;
-    if (coins! >= percent) {
+  Future<bool> deductCoins(int userCoins) async {
+    if (userCoins >= 10) {
+      userCoins -= 10;
+      await userService.updateCoin(email: currentUser?.email, coin: userCoins);
       return true;
     }
     return false;
   }
 
   Widget _form() {
+    int userCoins = currentUser?.coins ?? 0;
+    int postFee = 10;
+    double maxAllowedCoins = userCoins * 0.8;
+    int maxInputValue = (maxAllowedCoins - postFee).floor();
+    String maxValueCanCreate = maxInputValue.toString();
+
     return SingleChildScrollView(
       child: Container(
         margin: const EdgeInsets.all(10),
@@ -394,22 +413,22 @@ class _CreatePostPageState extends State<CreatePostPage> {
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
-                    color: Color(0xFFF2F2F7),
+                    width: 2,
+                    color: Color(0xFFA8A8A8),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 isDense: true,
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
+                    width: 2,
                     color: Color(0xffF9AF23),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 hintText: "ชื่อสินค้า",
                 hintStyle: const TextStyle(
-                  color: Color(0xFFC7C7CC),
+                  color: Color(0xFFA8A8A8),
                   fontSize: 14,
                   fontFamily: 'Mitr',
                   fontWeight: FontWeight.w300,
@@ -430,22 +449,22 @@ class _CreatePostPageState extends State<CreatePostPage> {
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
-                    color: Color(0xFFF2F2F7),
+                    width: 2,
+                    color: Color(0xFFA8A8A8),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 isDense: true,
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
+                    width: 2,
                     color: Color(0xffF9AF23),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 hintText: "สถานที่ซื้อของ",
                 hintStyle: const TextStyle(
-                  color: Color(0xFFC7C7CC),
+                  color: Color(0xFFA8A8A8),
                   fontSize: 14,
                   fontFamily: 'Mitr',
                   fontWeight: FontWeight.w300,
@@ -465,22 +484,22 @@ class _CreatePostPageState extends State<CreatePostPage> {
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
-                    color: Color(0xFFF2F2F7),
+                    width: 2,
+                    color: Color(0xFFA8A8A8),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 isDense: true,
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
+                    width: 2,
                     color: Color(0xffF9AF23),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 hintText: "สถานทีนัดรับ",
                 hintStyle: const TextStyle(
-                  color: Color(0xFFC7C7CC),
+                  color: Color(0xFFA8A8A8),
                   fontSize: 14,
                   fontFamily: 'Mitr',
                   fontWeight: FontWeight.w300,
@@ -497,25 +516,51 @@ class _CreatePostPageState extends State<CreatePostPage> {
               maxLines: null,
               maxLength: 10,
               keyboardType: TextInputType.number,
+              onChanged: (value) {
+                int enteredValue = int.tryParse(value) ?? 0;
+
+                if (enteredValue + postFee > maxAllowedCoins) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("ใช้เหรียญมากเกินไป"),
+                        content: Text(
+                            "คุณสามารถใช้เหรียญได้ไม่เกิน ${(maxAllowedCoins - postFee).floor()} เหรียญ\n(หลังหักค่าธรรมเนียมโพสต์ 10 เหรียญ)"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("ตกลง"),
+                          ),
+                        ],
+                      ),
+                    );
+                  });
+                  coinsController.text = maxInputValue.toString();
+                  coinsController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: coinsController.text.length),
+                  );
+                }
+              },
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
-                    color: Color(0xFFF2F2F7),
+                    width: 2,
+                    color: Color(0xFFA8A8A8),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 isDense: true,
                 focusedBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    width: 1,
+                    width: 2,
                     color: Color(0xffF9AF23),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                hintText: "ราคาโดยประมาณ",
+                hintText: "ราคาโดยประมาณ (เหรียญ)",
                 hintStyle: const TextStyle(
-                  color: Color(0xFFC7C7CC),
+                  color: Color(0xFFA8A8A8),
                   fontSize: 14,
                   fontFamily: 'Mitr',
                   fontWeight: FontWeight.w300,
@@ -531,6 +576,19 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 ),
               ),
             ),
+
+            const SizedBox(
+              height: 8,
+            ),
+
+            Text(
+              "*ต้องมีเหรียญมากกว่า $maxValueCanCreate เหรียญ*",
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 17,
+              ),
+            ),
+
             const SizedBox(
               height: 12,
             ),
@@ -569,17 +627,22 @@ class _CreatePostPageState extends State<CreatePostPage> {
             onSelectDateTime();
           },
           style: ElevatedButton.styleFrom(
+            fixedSize: const Size(370, 50),
             backgroundColor: const Color(0xffF9AF23),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             textStyle: const TextStyle(
               color: Color(0xFF172026),
-              fontSize: 14,
+              fontSize: 16,
               fontFamily: 'Mitr',
               fontWeight: FontWeight.w300,
               height: 0,
             ),
           ),
           child: const Text(
-            "จำกัดเวลา",
+            "เลือกเวลาในการรับสินค้า",
+            textAlign: TextAlign.center,
           ),
         ),
       ],
@@ -646,6 +709,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xffF9AF23),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
         fixedSize: const Size(100, 50),
         textStyle: const TextStyle(
           color: Color(0xFF172026),
@@ -655,29 +721,74 @@ class _CreatePostPageState extends State<CreatePostPage> {
           height: 0,
         ),
       ),
-      onPressed: () {
-        uploadToDatabase();
-        Navigator.pop(context);
-      },
-      child: const Text(
-        "POST",
-      ),
-    );
-    // return GestureDetector(
-    //   onTap: () {
-    //     // bool isChecked =
-    //     //     useCoinToCreatePost(123, 123); //todo implement data
-    //     // if (isChecked) {
-    //     uploadToDatabase();
-    //     Navigator.pop(context);
-    //     // }},
-    //   child: const Text(
-    //     "POST",
+      onPressed: () async {
+        int userCoins = currentUser?.coins ?? 0;
+        int postFee = 10;
+        int inputCoins = int.tryParse(coinsController.text) ?? 0;
 
-    //   );
-    //   }
-    // );
+        double maxAllowed = userCoins * 0.8;
+        int maxUsable = userCoins - postFee;
+
+        if (userCoins < postFee) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("เหรียญไม่พอ"),
+              content: const Text("คุณต้องมีเหรียญอย่างน้อย 10 เหรียญเพื่อสร้างโพสต์"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("ตกลง"),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+
+        if (inputCoins > maxUsable || inputCoins > maxAllowed) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("จำนวนเหรียญไม่ถูกต้อง"),
+              content: Text(
+                  "คุณสามารถใช้เหรียญได้ไม่เกิน ${maxUsable < maxAllowed ? maxUsable : maxAllowed.floor()} เหรียญ\n(หลังหักค่าธรรมเนียมโพสต์ $postFee เหรียญ และจำกัดไม่เกิน 80% ของเหรียญที่มี)"
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("ตกลง"),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+
+        bool canDeduct = await deductCoins(userCoins);
+        if (canDeduct) {
+          uploadToDatabase();
+          Navigator.pop(context);
+        } else {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("เหรียญไม่พอ"),
+              content: const Text("คุณต้องมีเหรียญอย่างน้อย 10 เหรียญเพื่อสร้างโพสต์"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("ตกลง"),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+      child: const Text("POST"),
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -708,7 +819,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                         "ยกเลิกโพสต์",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xffF9AF23),
+                          color: Color(0xFFFF3131),
                           fontSize: 20,
                           fontFamily: 'Mitr',
                           fontWeight: FontWeight.w500,

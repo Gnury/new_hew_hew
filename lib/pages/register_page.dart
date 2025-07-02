@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:new_hew_hew/pages/bottom_navigator_screen.dart';
 import 'package:new_hew_hew/pages/login_page.dart';
 
@@ -17,7 +19,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _addressController = TextEditingController();
   final _phoneNumberController = TextEditingController();
 
   @override
@@ -28,7 +29,6 @@ class _RegisterPageState extends State<RegisterPage> {
     _nameController.dispose();
     _lastNameController.dispose();
     _phoneNumberController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
@@ -36,7 +36,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_confirmPasswordController.text == _passwordController.text) {
       try {
         UserCredential userCredential =
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -45,13 +45,13 @@ class _RegisterPageState extends State<RegisterPage> {
           _nameController.text.trim(),
           _lastNameController.text.trim(),
           _emailController.text.trim(),
-          _addressController.text.trim(),
           int.parse(_phoneNumberController.text.trim()),
         );
 
         // Navigate to the next screen or update the UI
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const BottomNavigatorScreen()),
+          MaterialPageRoute(
+              builder: (context) => const BottomNavigatorScreen()),
         );
       } catch (e) {
         // Handle errors such as email already in use
@@ -80,28 +80,54 @@ class _RegisterPageState extends State<RegisterPage> {
       String name,
       String lastName,
       String email,
-      String address,
       int phoneNumber,
       ) async {
-    await FirebaseFirestore.instance.collection('users').doc(email).set({
-      'name': name,
-      'last_name': lastName,
-      'email': email,
-      'address': address,
-      'phone_number': phoneNumber,
-      'coins': 0,
-      'image_url': '',
-    });
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(email)
-        .collection("info")
-        .doc("profile")
-        .set({
-      'username': '$name $lastName',
-      'address': address,
-      'phoneNumber': phoneNumber,
-    });
+    try {
+      // ขอ permission ก่อน
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) {
+        print("ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง");
+        return;
+      }
+
+      // ดึงตำแหน่ง
+      LocationSettings locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      );
+      Position position = await Geolocator.getCurrentPosition(
+          locationSettings: locationSettings);
+
+      // ดึง FCM token
+      String? token = await FirebaseMessaging.instance.getToken();
+
+      if (token == null) {
+        print("FCM token ยังไม่พร้อม");
+        return;
+      }
+
+      // บันทึกลง Firestore
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(email)
+          .set({
+        'name': name,
+        'last_name': lastName,
+        'email': email,
+        'fcm_token': token,
+        'phone_number': phoneNumber,
+        'coins': 0,
+        'image_url': null,
+        'address': null,
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+      });
+    } catch (e) {
+      print("เกิดข้อผิดพลาดในการสร้างบัญชี: $e");
+    }
   }
 
   @override
@@ -354,45 +380,46 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(
                   height: 12,
                 ),
-                TextField(
-                  controller: _addressController,
-                  decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        width: 1,
-                        color: Color(0xFFF2F2F7),
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    isDense: true,
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        width: 1,
-                        color: Color(0xffF9AF23),
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    labelText: "Address",
-                    labelStyle: const TextStyle(
-                      color: Color(0xff7d7d7d),
-                      fontSize: 14,
-                      fontFamily: 'Mitr',
-                      fontWeight: FontWeight.w400,
-                      height: 0,
-                    ),
-                    hintText: "Address",
-                    hintStyle: const TextStyle(
-                      color: Color(0xFFC7C7CC),
-                      fontSize: 14,
-                      fontFamily: 'Mitr',
-                      fontWeight: FontWeight.w300,
-                      height: 0,
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                  height: 12,
-                ),
+                //address
+                // TextField(
+                //   controller: _addressController,
+                //   decoration: InputDecoration(
+                //     enabledBorder: OutlineInputBorder(
+                //       borderSide: const BorderSide(
+                //         width: 1,
+                //         color: Color(0xFFF2F2F7),
+                //       ),
+                //       borderRadius: BorderRadius.circular(12),
+                //     ),
+                //     isDense: true,
+                //     focusedBorder: OutlineInputBorder(
+                //       borderSide: const BorderSide(
+                //         width: 1,
+                //         color: Color(0xffF9AF23),
+                //       ),
+                //       borderRadius: BorderRadius.circular(12),
+                //     ),
+                //     labelText: "Address",
+                //     labelStyle: const TextStyle(
+                //       color: Color(0xff7d7d7d),
+                //       fontSize: 14,
+                //       fontFamily: 'Mitr',
+                //       fontWeight: FontWeight.w400,
+                //       height: 0,
+                //     ),
+                //     hintText: "Address",
+                //     hintStyle: const TextStyle(
+                //       color: Color(0xFFC7C7CC),
+                //       fontSize: 14,
+                //       fontFamily: 'Mitr',
+                //       fontWeight: FontWeight.w300,
+                //       height: 0,
+                //     ),
+                //   ),
+                // ),
+                // const SizedBox(
+                //   height: 12,
+                // ),
                 TextField(
                   controller: _phoneNumberController,
                   decoration: InputDecoration(
@@ -429,9 +456,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 25,),
-
+                const SizedBox(
+                  height: 25,
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: GestureDetector(

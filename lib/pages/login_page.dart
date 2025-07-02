@@ -1,7 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:new_hew_hew/pages/bottom_navigator_screen.dart';
 import 'package:new_hew_hew/pages/register_page.dart';
+
+import 'admin_page.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,20 +20,78 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  Future<void> saveUserFcmToken(String? userEmail) async {
+    String? token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await FirebaseFirestore.instance.collection('users').doc(userEmail).update({
+        'fcm_token': token,
+      });
+    }
+  }
+
+  Future<void> updateUserLocationOnLogin(String? userEmail) async {
+    try {
+      if (userEmail != null) {
+        LocationSettings locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        );
+
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          permission = await Geolocator.requestPermission();
+        }
+
+        if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+          Position position = await Geolocator.getCurrentPosition(locationSettings: locationSettings);
+
+          await FirebaseFirestore.instance.collection('users').doc(userEmail).update({
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+            'lastLogin': FieldValue.serverTimestamp(),
+          });
+          print("Updated location to: ${position.latitude}, ${position.longitude}");
+        } else {
+          print("Location permission not granted");
+        }
+      }
+    } catch (error) {
+      throw "updateUserLocationOnLogin : $error";
+    }
+  }
+
+  // String emailToDocId(String email) {
+  //   return email.replaceAll('.', '_');
+  // }
+
   void _signIn() async {
+    final email = _emailController.text.trim().toLowerCase();
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text.trim(),
       );
-      // Navigate to the bottom navigator screen on successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BottomNavigatorScreen(),
-        ),
-      );
+
+      // final adminDocId = emailToDocId(email);
+      final adminDoc = await FirebaseFirestore.instance.collection('admins').doc(email).get();
+      if (!mounted) return;
+
+      if (adminDoc.exists) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminPage()),
+        );
+      } else {
+        await saveUserFcmToken(email);
+        await updateUserLocationOnLogin(email);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const BottomNavigatorScreen()),
+        );
+      }
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       showErrorMessage(e.code);
     }
   }

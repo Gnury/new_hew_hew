@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:card_swiper/card_swiper.dart';
-import 'package:easy_debounce/easy_debounce.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import 'package:new_hew_hew/components/post_card.dart';
 import 'package:new_hew_hew/pages/create_post_page.dart';
 import 'package:new_hew_hew/pages/notification_page.dart';
@@ -23,8 +24,9 @@ class _FeedPageState extends State<FeedPage> {
   final swiperController = SwiperController();
 
   List<PostDetails>? posts;
+  Map<String, List<DocumentSnapshot>> titleMap = {};
+  Map<String, List<DocumentSnapshot>> buyPlaceMap = {};
 
-//todo search
   final searchController = TextEditingController();
   Timer? _debounce;
   List<PostDetails> _filterData = [];
@@ -50,11 +52,11 @@ class _FeedPageState extends State<FeedPage> {
     if (posts == null) return;
 
     List<PostDetails> filteredList = posts!.where((post) {
-      final title = post.postTitle.toLowerCase();
-      final buyPlace = post.buyPlace.toLowerCase();
+      final title = post.postTitle?.toLowerCase();
+      final buyPlace = post.buyPlace?.toLowerCase();
       final query = searchQuery.toLowerCase();
 
-      return title.contains(query) || buyPlace.contains(query);
+      return title!.contains(query) || buyPlace!.contains(query);
     }).toList();
 
     setState(() {
@@ -67,15 +69,56 @@ class _FeedPageState extends State<FeedPage> {
     super.initState();
     _getPosts();
   }
+  //filter category
+  void fetchData() async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('posts').get();
+
+    Map<String, List<DocumentSnapshot>> tempTitleMap = {};
+    Map<String, List<DocumentSnapshot>> tempBuyPlaceMap = {};
+
+    for (var doc in snapshot.docs) {
+      String title = doc['postTitle'];
+      String place = doc['buyPlace'];
+
+      if (!tempTitleMap.containsKey(title)) {
+        tempTitleMap[title] = [];
+      }
+      tempTitleMap[title]!.add(doc);
+
+      if (!tempBuyPlaceMap.containsKey(place)) {
+        tempBuyPlaceMap[place] = [];
+      }
+      tempBuyPlaceMap[place]!.add(doc);
+    }
+
+    setState(() {
+      titleMap = tempTitleMap;
+      buyPlaceMap = tempBuyPlaceMap;
+    });
+  }
 
   Future<void> _getPosts() async {
-    log('_getPosts');
-    final result = await _firebaseService.getPosts();
-    print(result);
-    setState(() {
-      posts = result;
-      print(posts);
-    });
+    try {
+      geo.Position position = await geo.Geolocator.getCurrentPosition();
+
+      final result = await _firebaseService.getPosts(
+        userLat: position.latitude,
+        userLon: position.longitude,
+      );
+
+      setState(() {
+        posts = result;
+        if (searchQuery.isNotEmpty) {
+          _filterData = posts!
+              .where((post) =>
+          (post.postTitle?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false) ||
+              (post.buyPlace?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false))
+              .toList();
+        }
+      });
+    } catch (e) {
+      log('Error loading posts: $e');
+    }
   }
 
   Widget _searchBar() {
@@ -156,50 +199,53 @@ class _FeedPageState extends State<FeedPage> {
         title: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Spacer(),
             Text(
-              'โพสต์รับหิ้ว',
+              'โพสต์ฝากหิ้ว',
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            Spacer(),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      NotificationPage(notificationPost: posts),
-                ),
-              );
-            },
-            icon: const Icon(Icons.notifications_active),
-            color: Colors.black,
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     onPressed: () {
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //           builder: (context) =>
+        //               NotificationPage(notificationPost: posts),
+        //         ),
+        //       );
+        //     },
+        //     icon: const Icon(Icons.notifications_active),
+        //     color: Colors.black,
+        //   ),
+        // ],
       ),
       body: Column(
         children: [
-          const SizedBox(
-            height: 12,
-          ),
+          const SizedBox(height: 12),
           _searchBar(),
-          const SizedBox(
-            height: 12,
-          ),
+          const SizedBox(height: 12),
           Expanded(
-            child: Visibility(
-              visible: searchQuery.isNotEmpty,
-              replacement: PostCard(
-                swiperController: swiperController,
-                postDetails: posts,
-              ),
-              child: PostCard(
-                swiperController: swiperController,
-                postDetails: _filterData,
+            child: RefreshIndicator(
+              onRefresh: _getPosts, // ดึงข้อมูลใหม่
+              child: Visibility(
+                visible: searchQuery.isNotEmpty,
+                replacement: posts == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : PostCard(
+                  swiperController: swiperController,
+                  postDetails: posts,
+                ),
+                child: PostCard(
+                  swiperController: swiperController,
+                  postDetails: _filterData,
+                ),
               ),
             ),
           ),

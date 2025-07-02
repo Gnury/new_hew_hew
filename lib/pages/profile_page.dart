@@ -1,10 +1,12 @@
+import 'package:card_swiper/card_swiper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:new_hew_hew/components/select_post_card.dart';
+import 'package:new_hew_hew/components/my_posts.dart';
 import 'package:new_hew_hew/firebase/firebase_service_api.dart';
 import 'package:new_hew_hew/pages/edit_profile_page.dart';
 import 'package:new_hew_hew/pages/login_page.dart';
+import '../models/order_log.dart';
 import '../models/post_details.dart';
 import '../models/user.dart';
 
@@ -18,15 +20,19 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   CurrentUser? currentUser;
   FirebaseService userService = FirebaseService();
-  final _userCollection = FirebaseFirestore.instance.collection("users");
-  List<PostDetails>? posts;
+  final CollectionReference<Map<String, dynamic>> _userCollection = FirebaseFirestore.instance.collection("users");
+  List<PostDetails> posts = [];
+  List<OrderLog> steps = [];
+
+
+  final swiperController = SwiperController();
 
   @override
   void initState() {
     super.initState();
     _getUser();
-    _getPosts();
   }
+
 
   Future<void> _getUser() async {
     var thisUser = await userService.getUser();
@@ -34,10 +40,12 @@ class _ProfilePageState extends State<ProfilePage> {
       if (thisUser == null) return;
       currentUser = thisUser;
     });
+    if (currentUser?.email == null) return;
+    _getUserPosts(currentUser!.email);
   }
 
-  Future<void> _getPosts() async {
-    final result = await userService.getPosts();
+  Future<void> _getUserPosts(String email) async {
+    final result = await userService.getUserPosts(email);
     setState(() {
       posts = result;
     });
@@ -50,14 +58,23 @@ class _ProfilePageState extends State<ProfilePage> {
         builder: (context) => const LoginPage(),
       ),
     );
-    setState(() {
-      currentUser = null;
-      posts = null;
-    });
+  }
+
+  Future<bool> deductCoins(int postCoin, int userCoins) async {
+    if (userCoins - postCoin >= postCoin) {
+      userCoins -= postCoin;
+      await userService.updateCoin(
+          email: currentUser?.email, coin: userCoins);
+      return true;
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (currentUser != null) {
+      print("Current User: ${currentUser?.name} ${currentUser?.lastName}");
+    }
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xffF5F0F0),
@@ -182,7 +199,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsetsDirectional.fromSTEB(
-                                      50, 2, 0, 12),
+                                      40, 2, 0, 12),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.max,
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -256,80 +273,89 @@ class _ProfilePageState extends State<ProfilePage> {
                               ],
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                                0, 0, 0, 12),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 200,
-                                  height: 50,
-                                  padding: const EdgeInsetsDirectional.all(16),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: const Color(0xffF9AF23),
+                          StreamBuilder<DocumentSnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(currentUser?.email)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData || !snapshot.data!.exists) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+
+                              final userData = snapshot.data!.data() as Map<String, dynamic>;
+                              final int coins = userData['coins'] ?? 0;
+
+                              return Padding(
+                                padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 12),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsetsDirectional.all(20),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: const Color(0xffF9AF23),
+                                          ),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text("Coins : "),
+                                            Text("$coins      Coins"),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                          "My Coins : ${currentUser?.coins.toString()} Coins"),
-                                    ],
-                                  ),
+                                  ],
                                 ),
-                                const SizedBox(
-                                  width: 12,
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xffF9AF23),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15.0),
-                                    ),
-                                    fixedSize: const Size(100, 50),
-                                    textStyle: const TextStyle(
-                                      fontSize: 14,
-                                      fontFamily: 'Miter',
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    int coins = 1000;
-                                    await _userCollection
-                                        .doc(currentUser?.email)
-                                        .update({
-                                      'coins': currentUser!.coins! + coins,
-                                    });
-                                    _getUser();
-                                  },
-                                  child: const Text("Add Coins"),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(24, 0, 24, 0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("การรับหิ้วของฉัน"),
-                      const SizedBox(height: 12),
-                      SelectPostCard(postDetails: posts),
-                    ],
-                  ),
-                ),
+               showMyPost(),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+  Widget showMyPost() {
+    return SizedBox(
+      height: 375,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(24, 0, 24, 0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "การฝากหิ้วของฉัน",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+      
+            const SizedBox(height: 12),
+      
+            Expanded(
+              child: MyPost(
+                swiperController: swiperController,
+                postDetails: posts,
+                orderLogList: steps,
+              ),
+            ),
+          ],
         ),
       ),
     );
